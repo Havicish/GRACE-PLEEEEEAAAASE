@@ -20,20 +20,39 @@ const MimeTypes = {
 
 let APIListeners = {};
 
+const ModulesDir = Path.join(__dirname, "../node_modules");
+
 const Server = Http.createServer((Req, Res) => {
-  if (Req.method === "GET") {
-    let FilePath = Path.join(PublicDir, Req.url === "/" ? "index.html" : Req.url);
+  if (Req.method == "GET") {
+    let Clean = Req.url == "/" ? "index.html" : Req.url.replace(/^\/+/, "");
+
+    let FromPublic = Path.join(PublicDir, Clean);
+
+    // Trim leading node_modules/
+    let ModFrag = Clean.replace(/^node_modules\//, "");
+    let FromModules = Path.join(ModulesDir, ModFrag);
+
+    let FilePath = Fs.existsSync(FromPublic) ? FromPublic :
+                   Fs.existsSync(FromModules) ? FromModules :
+                   null;
+
+    if (!FilePath) {
+      Res.writeHead(404, { "Content-Type": "text/plain" });
+      Res.end("404 Not Found");
+      return;
+    }
+
     let Ext = Path.extname(FilePath).toLowerCase();
     let ContentType = MimeTypes[Ext] || "application/octet-stream";
 
     Fs.readFile(FilePath, (Err, Data) => {
       if (Err) {
-        Res.writeHead(404, { "Content-Type": "text/plain" });
-        Res.end("404 Not Found");
-      } else {
-        Res.writeHead(200, { "Content-Type": ContentType });
-        Res.end(Data);
+        Res.writeHead(500, { "Content-Type": "text/plain" });
+        Res.end("Oops");
+        return;
       }
+      Res.writeHead(200, { "Content-Type": ContentType });
+      Res.end(Data);
     });
   }
 });

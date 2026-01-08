@@ -1,8 +1,9 @@
 import { GameState } from "./main.js";
 import { HideCanvas, ShowCanvas } from "./canvasManager.js";
+import { Scene } from "./render.js";
 
 export let Scenes = {
-  "MainMenu": { Objects: [], Type: "Html" } // Type can be Html or Canvas
+  "Game": { Objects: [], Type: "Canvas" } // Type can be Html or Canvas
 };
 
 export let OnSceneChangeListeners = {};
@@ -12,23 +13,31 @@ function Get(Selector) {
 }
 
 /** @param {string} Scene - The name of the scene. */
-export function AddObject(Scene, Object) {
-  if (Scenes[Scene] == undefined) {
-    console.error(`Scene: \"${Scene}\" does not exsist.`);
+export function AddObject(Scene2, Object) {
+  if (Scenes[Scene2] == undefined) {
+    console.error(`Scene: \"${Scene2}\" does not exsist.`);
     return;
   }
-  Scenes[Scene].Objects.push(Object);
-  Object.Scene = Scene;
+  Scenes[Scene2].Objects.push(Object);
+  Object.Scene = Scene2;
+  if (Object.Mesh)
+    Scene.add(Object.Mesh);
+  if (Object.Light)
+    Scene.add(Object.Light);
 }
 
 /** @param {string} Scene - The name of the scene. */
-export function RemoveObject(Scene, Object) {
-  if (Scenes[Scene] == undefined) {
-    console.error(`Scene: \"${Scene}\" does not exsist.`);
+export function RemoveObject(Scene2, Object) {
+  if (Scenes[Scene2] == undefined) {
+    console.error(`Scene: \"${Scene2}\" does not exsist.`);
     return;
   }
-  Scenes[Scene].Objects = Scenes[Scene].Objects.filter(obj => obj !== Object);
+  Scenes[Scene2].Objects = Scenes[Scene2].Objects.filter(obj => obj !== Object);
   Object.Scene = null;
+  if (Object.Mesh)
+    Scene.remove(Object.Mesh);
+  if (Object.Light)
+    Scene.remove(Object.Light);
 }
 
 /** @param {string} Scene - The name of the scene. */

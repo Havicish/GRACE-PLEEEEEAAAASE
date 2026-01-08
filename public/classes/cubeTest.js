@@ -1,11 +1,13 @@
-import * as THREE from "../node_modules/three/build/three.module.js";
-
-import { Canvas, Ctx } from './canvasManager.js';
+import * as THREE from "../../../node_modules/three/build/three.module.js";
 
 export class CubeTest {
   constructor() {
     this.Geometry = new THREE.BoxGeometry(1, 1, 1);
-    this.Material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+    this.Material = new THREE.MeshStandardMaterial({
+      color: 0x00ff00,
+      roughness: 0.4,
+      metalness: 0.1
+    });
     this.Mesh = new THREE.Mesh(this.Geometry, this.Material);
     this.Mesh.position.set(0, 0, -5);
   }

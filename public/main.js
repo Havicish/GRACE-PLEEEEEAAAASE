@@ -10,9 +10,11 @@ export let GameState = {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-  SetScene("Game");
+  setTimeout(() => {
+    SetScene("Game");
 
-  Frame();
+    Frame();
+  }, 20);
 });
 
 let LastTime = performance.now();
