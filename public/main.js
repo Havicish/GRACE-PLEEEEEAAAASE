@@ -2,6 +2,7 @@ import { RenderAll } from "./render.js";
 import { UpdateAll } from "./updaters.js";
 import { Scenes, SetScene } from "./sceneManager.js";
 import { Mouse } from "./userInputManager.js";
+import { UpdatePhysics } from "./physicsManager.js";
 
 export let GameState = {
   CurrentScene: null,
@@ -22,6 +23,8 @@ function Frame() {
   let DT = (performance.now() - LastTime) / 1000;
   LastTime = performance.now();
   DT = Math.min(DT, 0.5) * GameState.TimeScale;
+
+  UpdatePhysics(DT);
 
   let Objects = Scenes[GameState.CurrentScene].Objects;
 
@@ -44,6 +47,8 @@ function Frame() {
 
   Mouse.ScrollX /= 1.1;
   Mouse.ScrollY /= 1.1;
+  Mouse.DeltaX = 0;
+  Mouse.DeltaY = 0;
 
   GameState.LastScene = GameState.CurrentScene;
 

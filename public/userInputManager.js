@@ -1,6 +1,14 @@
-export let Mouse = {X: 0, Y: 0, Buttons: [], ScrollX: 0, ScrollY: 0};
+export let Mouse = {X: 0, Y: 0, DeltaX: 0, DeltaY: 0, LastX: 0, LastY: 0, Buttons: [], ScrollX: 0, ScrollY: 0};
 
 document.addEventListener("mousemove", (Event) => {
+  // Use movementX/Y for locked pointer, fallback to position delta
+  if (document.pointerLockElement) {
+    Mouse.DeltaX = Event.movementX;
+    Mouse.DeltaY = Event.movementY;
+  } else {
+    Mouse.DeltaX = Event.clientX - Mouse.X;
+    Mouse.DeltaY = Event.clientY - Mouse.Y;
+  }
   Mouse.X = Event.clientX;
   Mouse.Y = Event.clientY;
 });

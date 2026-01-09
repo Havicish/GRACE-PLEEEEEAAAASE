@@ -20,10 +20,9 @@ export function AddObject(Scene2, Object) {
   }
   Scenes[Scene2].Objects.push(Object);
   Object.Scene = Scene2;
-  if (Object.Mesh)
-    Scene.add(Object.Mesh);
-  if (Object.Light)
-    Scene.add(Object.Light);
+  for (let Thing of Object.ThingsToAddTo3DScene || []) {
+    Scene.add(Thing);
+  }
 }
 
 /** @param {string} Scene - The name of the scene. */

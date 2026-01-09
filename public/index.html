@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://fonts.googleapis.com/css?family=Silkscreen" rel="stylesheet">
   <title>Grace</title>
+  <style>
+    body {
+      color: white;
+      font-family: 'Trebuchet MS';
+      font-size: 16px;
+      cursor: default;
+    }
+  </style>
 </head>
 <body style="background-color: black; overflow: hidden;">
   <div id="LoadingScreen" style="z-index: 1000; position: absolute; inset: 0; background-color: black; width: 100vw; height: 100vh; display: block;">
@@ -19,7 +27,7 @@
   </script>
   <canvas id="Canvas" style="position: absolute; inset: 0; z-index: 100; display: none;"></canvas>
   <div id="Console" style="position: fixed; bottom: 0; left: 0; width: 100%; height: 150px; background-color: rgba(0, 0, 0, 0.8); font-family: monospace; font-size: 14px; overflow-y: auto; z-index: 200; display: none;"></div>
-  <p id="FPSDisplay" style="position: absolute; bottom: -10px; left: 10px; color: white;">FPS: 60</p>
+  <p id="FPSDisplay" style="position: absolute; bottom: -10px; left: 10px; color: white; z-index: 200;">FPS: 60</p>
   
   <script src="main.js" type="module"></script>
   <script src="userInputManager.js" type="module"></script>
