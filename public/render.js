@@ -14,21 +14,19 @@ document.addEventListener("DOMContentLoaded", () => {
     Renderer3D = new THREE.WebGLRenderer({ canvas: Canvas, alpha: true });
     Renderer3D.setSize(Canvas.width, Canvas.height);
     Renderer3D.shadowMap.enabled = true;
-    Renderer3D.shadowMap.type = THREE.PCFSoftShadowMap;
-    let Fog = new THREE.Fog(0x000000, 0.002, 15);
-    Scene.fog = Fog;
+    Renderer3D.shadowMap.type = THREE.BasicShadowMap;
+    let Fog = new THREE.Fog(0x000000, 0.002, 25);
+    //Scene.fog = Fog;
+    let AmbientLight = new THREE.AmbientLight(0xe88822, 0.6);
+    Scene.add(AmbientLight);
   }, 10);
 });
 
 export function RenderAll(Objects) {
   if (!Scene || !Renderer3D || !Camera3D) return;
-
-  let AmbientLight = new THREE.AmbientLight(0xe88822, 0.2);
-  Scene.add(AmbientLight);
-
+  
+  Camera3D.updateMatrixWorld();
   Renderer3D.render(Scene, Camera3D);
-
-  Scene.remove(AmbientLight);
 }
 
 export function UpdateCameraStuff(W, H) {

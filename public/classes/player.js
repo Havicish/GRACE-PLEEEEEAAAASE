@@ -9,14 +9,20 @@ import { MainConsole } from "../consoleManager.js";
 export class Player {
   constructor(Position = new THREE.Vector3(0, 2, 0)) {
     this.Position = Position.clone();
-    this.Speed = 0.3;
-    this.JumpForce = 8;
+
+    this.Friction = 0.8;
+    this.SlideFriction = 1.02;
+    this.AirResistance = 0.98;
+    this.BaseSpeed = 0.8 * 5;
+    this.Speed = 0.8;
+    this.JumpForce = 80;
     this.IsGrounded = false;
     this.MouseSensitivity = 0.002;
     this.JumpLastDown = false;
-
     this.MaxWallJumps = 2;
     this.WallJumpsDone = 0;
+    this.IsSliding = false;
+    this.SlidingSpeed = 0;
     
     // Camera setup
     this.Rotation = new THREE.Euler(0, 0, 0, 'YXZ');
@@ -38,15 +44,15 @@ export class Player {
     this.Camera.add(this.Light);
     this.Time = 0;
     this.PerlinNoise = this.createPerlinNoise();
-    this.Light.distance = 50;
-    this.Light.decay = 1.7;
+    this.Light.distance = 10;
+    this.Light.decay = 2;
     this.Light.castShadow = true;
     this.Light.color = new THREE.Color(0xe88822);
-    this.Light2.distance = 0.1;
+    this.Light2.distance = 2;
     this.Light2.decay = 2;
     this.Light2.castShadow = true;
     this.Light2.color = new THREE.Color(0xe88822);
-    this.ThingsToAddTo3DScene = [this.Light, this.Light2];
+    this.ThingsToAddTo3DScene = [this.Light]; //, this.Light2
     
     // Request pointer lock on click
     document.addEventListener("mousedown", () => {
@@ -70,6 +76,8 @@ export class Player {
   }
 
   Update(DT) {
+    let DT1 = DT * 60;
+
     // Update camera rotation based on mouse movement
     this.Rotation.y -= Mouse.DeltaX * this.MouseSensitivity;
     this.Rotation.x -= Mouse.DeltaY * this.MouseSensitivity;
@@ -92,12 +100,22 @@ export class Player {
     // Handle input relative to camera direction
     let InputDirection = new THREE.Vector3(0, 0, 0);
 
-    if (IsKeyDown("W")) InputDirection.z -= 1;
-    if (IsKeyDown("S")) InputDirection.z += 1;
-    if (IsKeyDown("A")) InputDirection.x -= 1;
-    if (IsKeyDown("D")) InputDirection.x += 1;
-    if (IsKeyDown("Shift")) this.Speed = 1.75;
-    else this.Speed = 0.8;
+    if (IsKeyDown("C") && IsKeyDown("Shift") && !this.IsSliding) {
+      this.IsSliding = true;
+      this.SlidingSpeed = 1.75;
+    }
+
+    if (!IsKeyDown("C"))
+      this.IsSliding = false;
+
+    this.Speed = this.BaseSpeed;
+    if (!this.IsSliding) {
+      if (IsKeyDown("W")) InputDirection.z -= 1;
+      if (IsKeyDown("S")) InputDirection.z += 1;
+      if (IsKeyDown("A")) InputDirection.x -= 1;
+      if (IsKeyDown("D")) InputDirection.x += 1;
+      if (IsKeyDown("Shift")) this.Speed *= 2.1875;
+    }
 
     if (InputDirection.length() > 0) {
       InputDirection.normalize();
@@ -115,9 +133,8 @@ export class Player {
         this.WallJumpsDone += 1;
 
         // Push off from wall
-        MainConsole.Log(JSON.stringify(Normal));
-        this.PhysicsBody.velocity.x += Normal.x * 3 + Normal.x * this.Speed * 2 - Math.sin(this.Camera.rotation.y) * this.Speed * 2.8;
-        this.PhysicsBody.velocity.z += Normal.z * 3 + Normal.z * this.Speed * 2 - Math.cos(this.Camera.rotation.y) * this.Speed * 2.8;
+        this.PhysicsBody.velocity.x += (Normal.x * 3 + Normal.x * this.Speed * 2 - Math.sin(this.Camera.rotation.y) * this.Speed * 1.8) * DT1;
+        this.PhysicsBody.velocity.z += (Normal.z * 3 + Normal.z * this.Speed * 2 - Math.cos(this.Camera.rotation.y) * this.Speed * 1.8) * DT1;
 
         return;
       }
@@ -130,28 +147,30 @@ export class Player {
 
       InputDirection.multiplyScalar(this.Speed);
 
-      this.PhysicsBody.velocity.x += InputDirection.x;
-      this.PhysicsBody.velocity.z += InputDirection.z;
+      this.PhysicsBody.velocity.x += InputDirection.x * DT1;
+      this.PhysicsBody.velocity.z += InputDirection.z * DT1;
     }
     if (this.IsGrounded) {
-      this.PhysicsBody.velocity.x *= 0.8;
-      this.PhysicsBody.velocity.z *= 0.8;
+      if (!this.IsSliding) {
+        this.PhysicsBody.velocity.x /= Math.pow(1 / this.Friction, DT1);
+        this.PhysicsBody.velocity.z /= Math.pow(1 / this.Friction, DT1);
+      } else {
+        this.PhysicsBody.velocity.x /= Math.pow(1 / this.SlideFriction, DT1);
+        this.PhysicsBody.velocity.z /= Math.pow(1 / this.SlideFriction, DT1);
+      }
     } else {
-      this.PhysicsBody.velocity.x *= 0.98;
-      this.PhysicsBody.velocity.z *= 0.98;
+      if (!this.IsSliding) {
+        this.PhysicsBody.velocity.x /= Math.pow(1 / this.AirResistance, DT1);
+        this.PhysicsBody.velocity.z /= Math.pow(1 / this.AirResistance, DT1);
+      } else {
+        this.PhysicsBody.velocity.x /= Math.pow(1 / this.SlideFriction, DT1);
+        this.PhysicsBody.velocity.z /= Math.pow(1 / this.SlideFriction, DT1);
+      }
     }
 
     if (this.PhysicsBody.position.y < -1) {
       this.PhysicsBody.position.set(0, 5, 0);
       this.PhysicsBody.velocity.set(0, 0, 0);
-    }
-
-    let RaycastResult = this.Raycast(
-      new CANNON.Vec3(this.PhysicsBody.position.x, this.PhysicsBody.position.y + 0.2, this.PhysicsBody.position.z),
-      new CANNON.Vec3(this.PhysicsBody.position.x, this.PhysicsBody.position.y - 1, this.PhysicsBody.position.z)
-    );
-    if (RaycastResult && RaycastResult.hasHit) {
-      MainConsole.Log("Hit normal: " + JSON.stringify(RaycastResult.hitNormalWorld));
     }
 
     // Jump
@@ -196,6 +215,7 @@ export class Player {
 
       return result;
     }
+
     return null;
   }
 
@@ -206,22 +226,11 @@ export class Player {
       this.PhysicsBody.position.z
     );
     
-    const Direction = new CANNON.Vec3(0, -1, 0);
-    const Ray = new CANNON.Ray(From, Direction);
-    Ray.to = new CANNON.Vec3(From.x, From.y - 0.2, From.z);
-
     this.IsGrounded = false;
 
-    for (let Body of PhysicsWorld.bodies) {
-      if (Body === this.PhysicsBody) continue;
-      
-      const Result = new CANNON.RaycastResult();
-      Ray.intersectBody(Body, Result);
-      
-      if (Result.hasHit) {
-        this.IsGrounded = true;
-        break;
-      }
+    let Result = this.Raycast(From, new CANNON.Vec3(From.x, From.y - 0.4, From.z));
+    if (Result && Result.hasHit) {
+      this.IsGrounded = true;
     }
   }
 
